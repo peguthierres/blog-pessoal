@@ -1,55 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { usePosts } from '../hooks/usePosts';
+import { useAuth } from '../hooks/useAuth';
 import { formatDate } from '../lib/utils';
-import { Plus, Edit, Trash2, Eye, ThumbsUp } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, ThumbsUp, LogOut } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
-interface Post {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  image_url: string | null;
-  created_at: string;
-  upvotes: number;
-}
-
 export function Dashboard() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
-  const fetchPosts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setPosts(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar posts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { posts, loading, deletePost } = usePosts();
+  const { signOut } = useAuth();
 
   const handleDelete = async (id: string, title: string) => {
     if (window.confirm(`Tem certeza que deseja deletar "${title}"?`)) {
       try {
-        const { error } = await supabase
-          .from('posts')
-          .delete()
-          .eq('id', id);
-
-        if (error) throw error;
-        
-        setPosts(posts.filter(post => post.id !== id));
+        await deletePost(id);
       } catch (error) {
         console.error('Erro ao deletar post:', error);
         alert('Erro ao deletar o post. Tente novamente.');
@@ -89,13 +53,23 @@ export function Dashboard() {
             </p>
           </div>
           
-          <Link
-            to="/nova-publicacao"
-            className="inline-flex items-center space-x-2 bg-stone-800 text-white px-6 py-3 rounded-lg hover:bg-stone-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Nova Publicação</span>
-          </Link>
+          <div className="flex items-center space-x-4">
+            <Link
+              to="/nova-publicacao"
+              className="inline-flex items-center space-x-2 bg-stone-800 text-white px-6 py-3 rounded-lg hover:bg-stone-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Nova Publicação</span>
+            </Link>
+            
+            <button
+              onClick={signOut}
+              className="inline-flex items-center space-x-2 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">

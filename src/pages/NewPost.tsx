@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { usePosts } from '../hooks/usePosts';
 import { PostEditor } from '../components/PostEditor';
 import { uploadImage } from '../lib/utils';
+import { generateSlug } from '../lib/utils';
 import { Upload, Save, ArrowLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
@@ -14,17 +15,7 @@ export function NewPost() {
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
-
-  const generateSlug = (title: string): string => {
-    return title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
-  };
+  const { createPost } = usePosts();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -36,23 +27,16 @@ export function NewPost() {
     try {
       const slug = generateSlug(title);
       
-      // Para simplificar, vamos usar um ID fixo para o autor
-      // Em um cenário real, você teria o ID do usuário autenticado
-      const authorId = '00000000-0000-0000-0000-000000000000';
+      const post = await createPost({
+        title,
+        slug,
+        content,
+        image_url: imageUrl,
+        author_id: '', // Will be set by createPost
+        upvotes: 0,
+      });
       
-      const { error } = await supabase
-        .from('posts')
-        .insert({
-          title,
-          slug,
-          content,
-          image_url: imageUrl,
-          author_id: authorId,
-        });
-
-      if (error) throw error;
-      
-      navigate(`/post/${slug}`);
+      navigate(`/post/${post.slug}`);
     } catch (err) {
       console.error('Erro ao salvar:', err);
       throw err;

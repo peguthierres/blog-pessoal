@@ -1,22 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { usePosts } from '../hooks/usePosts';
 import { PostEditor } from '../components/PostEditor';
 import { ArrowLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  image_url: string | null;
-}
+import { Post } from '../hooks/usePosts';
 
 export function EditPost() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const { updatePost } = usePosts();
 
   useEffect(() => {
     if (id) {
@@ -26,9 +22,13 @@ export function EditPost() {
 
   const fetchPost = async () => {
     try {
+      const { supabase } = await import('../lib/supabase');
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select(`
+          *,
+          profiles(id, name, email)
+        `)
         .eq('id', id)
         .single();
 
@@ -46,16 +46,11 @@ export function EditPost() {
     if (!post) return;
 
     try {
-      const { error } = await supabase
-        .from('posts')
-        .update({
-          title,
-          content,
-          image_url: imageUrl,
-        })
-        .eq('id', post.id);
-
-      if (error) throw error;
+      await updatePost(post.id, {
+        title,
+        content,
+        image_url: imageUrl,
+      });
 
       navigate('/painel');
     } catch (error) {

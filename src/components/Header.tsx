@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, PenTool } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 export function Header() {
   return (
@@ -30,13 +30,6 @@ export function Header() {
               className="text-stone-700 hover:text-stone-900 transition-colors"
             >
               Sobre
-            </Link>
-            <Link 
-              to="/painel" 
-              className="inline-flex items-center space-x-2 bg-stone-800 text-white px-4 py-2 rounded-lg hover:bg-stone-700 transition-colors"
-            >
-              <PenTool className="w-4 h-4" />
-              <span>Painel</span>
             </Link>
           </nav>
         </div>
